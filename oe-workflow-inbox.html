@@ -1,0 +1,278 @@
+<link rel="import" href="../iron-flex-layout/classes/iron-flex-layout.html">
+<dom-module id="oe-workflow-inbox">
+    <template>
+        <style is="custom-style" include="iron-flex iron-flex-alignment iron-flex-reverse iron-flex-factors iron-positioning"></style>
+        <style>
+             :host {
+                position: relative;
+                display: block;
+                box-sizing: border-box;
+            }
+
+            .table-container {
+                background: #FFF;
+                padding: 8px;
+            }
+
+            .title-bar {
+                height: 48px;
+            }
+
+
+            .tab-sections {
+                display: flex;
+                flex-direction: column;
+                width: 100%;
+                height: 100%;
+                justify-content: space-between;
+                align-items: center;
+                box-sizing: border-box;
+                padding: 12px 0px;
+            }
+
+            .tab-name {
+                text-transform: uppercase;
+            }
+
+            paper-tab.iron-selected .tab-name {
+                color: var(--default-primary-color, blue);
+            }
+
+            .tab-count {
+                font-size: 32px;
+            }
+
+            .table-tabs {
+                padding: 0px 16px;
+            }
+
+            .table-tabs paper-tabs {
+                height: 84px;
+                border-bottom: 1px solid rgba(0, 0, 0, 0.4);
+                --paper-tabs-selection-bar-color: var(--default-primary-color, blue);
+            }
+
+            .list-panel {
+                padding: 8px;
+            }
+
+            .work-items-list {
+                height: 400px;
+            }
+
+            .work-item {
+                height: 52px;
+                font-size: 14px;
+                padding: 2px 16px;
+                box-sizing: border-box;
+                border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+                cursor: pointer;
+            }
+
+            .work-item:hover {
+                background: rgba(0, 0, 0, 0.1);
+            }
+
+            .work-item .item-options {
+                opacity: 0.6;
+            }
+
+            .work-item:hover .item-options {
+                opacity: 1;
+            }
+
+            .work-item .item-name {
+                font-weight: bold;
+            }
+
+            .work-item iron-icon {
+                --iron-icon-width: 20px;
+                --iron-icon-height: 20px;
+            }
+
+            .item-status-icon {
+                margin-right: 16px;
+                margin-top: 4px;
+            }
+
+            .form-panel {
+                box-shadow: 1px 1px 1px 0px inset;
+                padding: 8px;
+                background: #e8e8e8;
+                height: 400px;
+                width: 400px;
+            }
+        </style>
+        <div class="component-container layout horizontal">
+            <div class="table-container flex">
+                <div class="title-bar layout horizontal center justified">
+                    <label>
+                        Workitems
+                    </label>
+                    <div class="options">
+                        <iron-icon icon="search"></iron-icon>
+                    </div>
+                </div>
+                <div class="table-tabs">
+                    <paper-tabs selected="{{selectedTab}}">
+                        <paper-tab>
+                            <div class="tab-sections">
+                                <label class="tab-name">Total</label>
+                                <label class="tab-count">12</label>
+                            </div>
+                        </paper-tab>
+                        <paper-tab>
+                            <div class="tab-sections">
+                                <label class="tab-name">Roles</label>
+                                <label class="tab-count">3</label>
+                            </div>
+                        </paper-tab>
+                        <paper-tab>
+                            <div class="tab-sections">
+                                <label class="tab-name">Pending</label>
+                                <label class="tab-count">5</label>
+                            </div>
+                        </paper-tab>
+                        <paper-tab>
+                            <div class="tab-sections">
+                                <label class="tab-name">Completed</label>
+                                <label class="tab-count">7</label>
+                            </div>
+                        </paper-tab>
+                    </paper-tabs>
+                </div>
+                <div class="list-panel">
+                    <iron-list class="work-items-list" items="[[items]]">
+                        <template>
+                            <div class="work-item layout horizontal center justified" on-tap="_launchItem">
+                                <div class="item-detail layout horizontal start">
+                                    <iron-icon icon="star" class="item-status-icon"></iron-icon>
+                                    <div class="layout vertical justified">
+                                        <label class="item-name">[[item.name]]</label>
+                                        <label class="item-date">[[item._modifiedOn]]</label>
+                                    </div>
+                                </div>
+                                <div class="item-options">
+                                    <iron-icon icon="create"></iron-icon>
+                                </div>
+                            </div>
+                        </template>
+                    </iron-list>
+                </div>
+            </div>
+            <div class="form-container">
+                <iron-collapse opened="[[formOpened]]" horizontal>
+                    <div class="form-panel">
+                        <label>[[selectedItem.name]]</label>
+                        <paper-button raised on-tap="_closePanel">
+                            Close
+                        </paper-button>
+                    </div>
+                </iron-collapse>
+            </div>
+        </div>
+    </template>
+    <script>
+        Polymer({
+            is: "oe-workflow-inbox",
+            behaviors: [],
+            listeners: {},
+            attached: function () {
+                this.set('selectedTab', 0);
+                this.set('formOpened', false);
+                this.set('items', [{
+                    "_id": ("59e48379883631802be7f997"),
+                    "name": "UserTask 1",
+                    "status": "pending",
+                    "processTokenId": "a3495e6b-1a26-4ca7-9c66-6a9986e75935",
+                    "candidateUsers": [
+                        "tony"
+                    ],
+                    "formKey": "SimpleApprovalForm",
+                    "formType": "FormKey",
+                    "formVariables": {
+                        "fromDate": "11/07/2014",
+                        "toDate": "14/07/2014",
+                        "comments": "Going home for Diwali"
+                    },
+                    "processInstanceId": ("59e48379883631802be7f995"),
+                    "_modifiedBy": "user1",
+                    "_modifiedOn": ("2017-10-16T15:31:33.714+05:30"),
+                    "_isDeleted": false,
+                    "_version": "f0568bec-714c-41f3-a0f9-d7541dbf2f89",
+                    "workflowInstanceId": ("59e48379883631802be7f994")
+                }, {
+                    "_id": ("59e48379883631802be7f997"),
+                    "name": "UserTask 2",
+                    "status": "pending",
+                    "processTokenId": "a3495e6b-1a26-4ca7-9c66-6a9986e75935",
+                    "candidateUsers": [
+                        "tony"
+                    ],
+                    "formKey": "SimpleApprovalForm",
+                    "formType": "FormKey",
+                    "formVariables": {
+                        "fromDate": "11/07/2014",
+                        "toDate": "14/07/2014",
+                        "comments": "Going home for Diwali"
+                    },
+                    "processInstanceId": ("59e48379883631802be7f995"),
+                    "_modifiedBy": "user1",
+                    "_modifiedOn": ("2017-10-16T15:31:33.714+05:30"),
+                    "_isDeleted": false,
+                    "_version": "f0568bec-714c-41f3-a0f9-d7541dbf2f89",
+                    "workflowInstanceId": ("59e48379883631802be7f994")
+                }, {
+                    "_id": ("59e48379883631802be7f997"),
+                    "name": "Group Task 1",
+                    "status": "pending",
+                    "processTokenId": "a3495e6b-1a26-4ca7-9c66-6a9986e75935",
+                    "candidateUsers": [
+                        "tony"
+                    ],
+                    "formKey": "SimpleApprovalForm",
+                    "formType": "FormKey",
+                    "formVariables": {
+                        "fromDate": "11/07/2014",
+                        "toDate": "14/07/2014",
+                        "comments": "Going home for Diwali"
+                    },
+                    "processInstanceId": ("59e48379883631802be7f995"),
+                    "_modifiedBy": "user1",
+                    "_modifiedOn": ("2017-10-16T15:31:33.714+05:30"),
+                    "_isDeleted": false,
+                    "_version": "f0568bec-714c-41f3-a0f9-d7541dbf2f89",
+                    "workflowInstanceId": ("59e48379883631802be7f994")
+                }, {
+                    "_id": ("59e48379883631802be7f997"),
+                    "name": "Group Task 2",
+                    "status": "pending",
+                    "processTokenId": "a3495e6b-1a26-4ca7-9c66-6a9986e75935",
+                    "candidateUsers": [
+                        "tony"
+                    ],
+                    "formKey": "SimpleApprovalForm",
+                    "formType": "FormKey",
+                    "formVariables": {
+                        "fromDate": "11/07/2014",
+                        "toDate": "14/07/2014",
+                        "comments": "Going home for Diwali"
+                    },
+                    "processInstanceId": ("59e48379883631802be7f995"),
+                    "_modifiedBy": "user1",
+                    "_modifiedOn": ("2017-10-16T15:31:33.714+05:30"),
+                    "_isDeleted": false,
+                    "_version": "f0568bec-714c-41f3-a0f9-d7541dbf2f89",
+                    "workflowInstanceId": ("59e48379883631802be7f994")
+                }]);
+            },
+            _launchItem: function (e) {
+                this.set('selectedItem', e.model.item);
+                this.set('formOpened', true);
+            },
+            _closePanel: function () {
+                this.set('formOpened', false);
+            }
+        })
+    </script>
+</dom-module>
