@@ -93,6 +93,11 @@
             .item-status-icon {
                 margin-right: 16px;
                 margin-top: 4px;
+                color:#FF9800;
+            }
+
+            .item-status-pending{
+                color:grey;
             }
 
             .form-panel {
@@ -146,7 +151,7 @@
                         <template>
                             <div class="work-item layout horizontal center justified" on-tap="_launchItem">
                                 <div class="item-detail layout horizontal start">
-                                    <iron-icon icon="star" class="item-status-icon"></iron-icon>
+                                    <iron-icon icon$="[[_getStatusIcon(item.status)]]" class$="item-status-icon item-status-[[item.status]]"></iron-icon>
                                     <div class="layout vertical justified">
                                         <label class="item-name">[[item.name]]</label>
                                         <label class="item-date">[[item._modifiedOn]]</label>
@@ -162,8 +167,8 @@
             </div>
             <div class="form-container">
                 <iron-collapse opened="[[formOpened]]" horizontal>
-                    <div class="form-panel">
-                        <label>[[selectedItem.name]]</label>
+                    <div class="form-panel" id="task-form-container">
+                        <label>[[selectedTask.name]]</label>
                         <paper-button raised on-tap="_closePanel">
                             Close
                         </paper-button>
@@ -176,7 +181,10 @@
         Polymer({
             is: "oe-workflow-inbox",
             behaviors: [],
-            listeners: {},
+            listeners: {'oe-task-completed':'_closePanel'},
+            _getStatusIcon:function(status){
+                return status === "pending" ? "info" : "star"
+            },
             attached: function () {
                 this.set('selectedTab', 0);
                 this.set('formOpened', false);
@@ -203,18 +211,18 @@
                     "workflowInstanceId": ("59e48379883631802be7f994")
                 }, {
                     "_id": ("59e48379883631802be7f997"),
-                    "name": "UserTask 2",
+                    "name": "Leave Application",
                     "status": "pending",
                     "processTokenId": "a3495e6b-1a26-4ca7-9c66-6a9986e75935",
                     "candidateUsers": [
                         "tony"
                     ],
-                    "formKey": "SimpleApprovalForm",
+                    "formKey": "leave-approval-form",
                     "formType": "FormKey",
                     "formVariables": {
-                        "fromDate": "11/07/2014",
-                        "toDate": "14/07/2014",
-                        "comments": "Going home for Diwali"
+                        "duration": "3 days",
+                        "name": "Goku",
+                        "reason": "Going to participate in intergalactic martial arts tournament"
                     },
                     "processInstanceId": ("59e48379883631802be7f995"),
                     "_modifiedBy": "user1",
@@ -225,7 +233,7 @@
                 }, {
                     "_id": ("59e48379883631802be7f997"),
                     "name": "Group Task 1",
-                    "status": "pending",
+                    "status": "completed",
                     "processTokenId": "a3495e6b-1a26-4ca7-9c66-6a9986e75935",
                     "candidateUsers": [
                         "tony"
@@ -267,7 +275,37 @@
                 }]);
             },
             _launchItem: function (e) {
-                this.set('selectedItem', e.model.item);
+                var task = e.model.item;
+                var formType = task.formType;
+                this.set('selectedTask', task);
+                if(formType === "FormKey"){
+                    var isPresent = Polymer.telemetry.registrations.find(function(f){
+                            return f.is == task.formKey
+                    });
+                    if(!isPresent){
+                        var url = task.formKey + '.html';
+                        Polymer.Base.importHref(url,function(e){
+                            this.loadElement()
+                        }.bind(this),function(err){
+                            this.fire('oe-show-error',"Error fetching the form");
+                            this._closePanel();
+                        }.bind(this))
+                    }else{
+                        this.loadElement()
+                    }
+                }else{
+
+                }
+                
+            },
+            loadElement:function(){
+                var eleName = this.selectedTask.formKey;
+                var container = this.querySelector('#task-form-container');
+                container.innerHTML = "";
+                Polymer.dom.flush();
+                var formEle = document.createElement(eleName);
+                formEle.set('taskInfo',this.selectedTask.formVariables);
+                container.appendChild(formEle);
                 this.set('formOpened', true);
             },
             _closePanel: function () {

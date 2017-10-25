@@ -1,0 +1,175 @@
+<script>
+    var OEUtils = OEUtils || {};
+    OEUtils.OEWorkFlowFormBehavior = {
+        properties: {
+            "taskInfo": {
+                type: Object,
+                notify: true
+            }
+        },
+        behaviors: [],
+        completeTask: function (payload,id) {
+            var url = '/api/workFlow/Task/'+id+'/complete'
+            this.makeAjaxCall(url,'post',payload,null,null,null,function(err,res){
+                if(err){
+                    this.resolveError(err);
+                    return;
+                }
+                this.fire('oe-task-completed',res);
+            })
+        },
+        makeAjaxCall: function (url, method, body, header, params, ajaxProps, cb) {
+
+            ajaxProps = ajaxProps || {};
+            if (!cb && typeof ajaxProps === 'function') {
+                cb = ajaxProps;
+                ajaxProps = {};
+            }
+
+            var ajax = document.createElement('oe-ajax');
+            ajax.contentType = ajaxProps.contentType || 'application/json';
+            ajax.handleAs = ajaxProps.handleAs || 'json';
+            ajax.url = url;
+            ajax.method = method.toUpperCase();
+            if (ajax.method == 'GET') {
+                params = params || {};
+                params.filter = params.filter || {};
+                params.filter.scope = {};
+            }
+            if (params) {
+                if (params.filter) {
+                    params.filter = JSON.stringify(params.filter);
+                }
+                ajax.params = params;
+            }
+            if (body) {
+                delete body._scope;
+                delete body.score;
+                ajax.body = JSON.stringify(body);
+            }
+
+            if (header) {
+                Object.keys(header).forEach(function (k) {
+                    var val = header[k];
+                    if (Array.isArray(val)) {
+                        ajax.headers[k] = val[0]
+                    } else {
+                        ajax.headers[k] = val
+                    }
+
+                })
+            }
+
+            ajax.addEventListener('response', function (event) {
+                if (cb) {
+                    cb(null, event.detail.response);
+                }
+            }.bind(this));
+            ajax.addEventListener('error', function (err) {
+                if (cb) {
+                    cb(err);
+                }
+            }.bind(this));
+            ajax.generateRequest();
+        },
+        resolveError: function (err) {
+            var errObj = OEUtils.extractErrorMessage(err);
+            this.fire('oe-show-error', errObj);
+            return errObj.code || errObj.message;
+        },
+        resolveErrors: function (err) {
+            function contructError(messages, codes) {
+                var fields = Object.keys(messages);
+                var messageArr = [];
+                fields.forEach(function (d) {
+                    messages[d].forEach(function (e, j) {
+                        var messageObj = {
+                            message: d + ' ' + e,
+                            code: codes[d][j],
+                            field: d
+                        }
+                        messageArr.push(messageObj);
+                    });
+                });
+                return messageArr;
+            }
+
+            var extractErr = function (err) {
+                var retErrorMsg;
+                if (err && err.detail && err.detail.request && err.detail.request.response) {
+                    var errorObj = err.detail.request.response.error;
+                    var errorMessages = [];
+
+                    if (!errorObj) {
+                        retErrorMsg = {
+                            code: 'UNKNOWN_SERVER_ERROR',
+                            message: 'Unknown server error'
+                        };
+                    } else if (errorObj.details) {
+                        if (Array.isArray(errorObj.details)) {
+                            errorMessages = errorObj.details.map(function (d) {
+                                if (d && d.details && d.details.messages) {
+                                    return contructError(d.details.messages, d.details.codes);
+                                } else {
+                                    return d;
+                                }
+                            }).filter(function (d) {
+                                return d !== undefined;
+                            });
+                        } else {
+                            errorMessages.push(contructError(errorObj.details.messages, errorObj.details.codes));
+                        }
+                        // flattening array of arrays to single array.
+                        errorMessages = [].concat.apply([], errorMessages);
+                        retErrorMsg = errorMessages;
+                    } else if (errorObj.details && errorObj.details.messages && errorObj.details.messages.errs &&
+                        errorObj.details
+                        .messages.errs.length > 0) {
+                        retErrorMsg = errorObj.details.messages.errs;
+                    } else if (errorObj.errors && errorObj.errors.length > 0) {
+                        retErrorMsg = errorObj.errors;
+                    } else if (errorObj.message) {
+                        retErrorMsg = {
+                            code: errorObj.code || errorObj.message,
+                            message: errorObj.message
+                        };
+                    } else if (errorObj.errmsg) {
+                        retErrorMsg = {
+                            code: errorObj.errmsg,
+                            message: errorObj.errmsg
+                        };
+                    } else {
+                        retErrorMsg = {
+                            code: 'UNKNOWN_SERVER_ERROR',
+                            message: 'Unknown server error'
+                        };
+                    }
+                } else {
+                    retErrorMsg = {
+                        code: 'NO_RESPONSE_FROM_SERVER',
+                        message: 'No response from server'
+                    };
+                }
+
+                if (!Array.isArray) {
+                    if (!retErrorMsg.code && retErrorMsg.errCode) {
+                        retErrorMsg.code = retErrorMsg.errCode;
+                    }
+                    if (!retErrorMsg.message && retErrorMsg.errMessage) {
+                        retErrorMsg.message = retErrorMsg.errMessage;
+                    }
+                }
+                return retErrorMsg;
+            };
+            var errObj = extractErr(err);
+            if (Array.isArray(errObj)) {
+                this.fire('oe-show-error', errObj.map(function (e) {
+                    return e.message || e.code
+                }).join(' , '));
+                return errObj;
+            }
+            this.fire('oe-show-error', errObj);
+            return errObj.code || errObj.message;
+        }
+    }
+</script>
