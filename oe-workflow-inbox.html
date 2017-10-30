@@ -103,13 +103,20 @@
             .form-panel {
                 box-shadow: 1px 1px 1px 0px inset;
                 padding: 8px;
-                background: #e8e8e8;
-                height: 400px;
-                width: 400px;
+                max-height: 600px;
+                overflow: auto;
+            }
+            .form-header{
+                height:48px;
+                background: #FFF;
+            }
+
+            .form-header iron-icon{
+                margin: 0px 16px;
             }
         </style>
-        <div class="component-container layout horizontal">
-            <div class="table-container flex">
+        <div class="component-container">
+            <div class="table-container" hidden=[[formOpened]]>
                 <div class="title-bar layout horizontal center justified">
                     <label>
                         Workitems
@@ -154,7 +161,7 @@
                                     <iron-icon icon$="[[_getStatusIcon(item.status)]]" class$="item-status-icon item-status-[[item.status]]"></iron-icon>
                                     <div class="layout vertical justified">
                                         <label class="item-name">[[item.name]]</label>
-                                        <label class="item-date">[[item._modifiedOn]]</label>
+                                        <label class="item-date">[[_getDateTime(item._modifiedOn)]]</label>
                                     </div>
                                 </div>
                                 <div class="item-options">
@@ -165,15 +172,14 @@
                     </iron-list>
                 </div>
             </div>
-            <div class="form-container">
-                <iron-collapse opened="[[formOpened]]" horizontal>
-                    <div class="form-panel" id="task-form-container">
-                        <label>[[selectedTask.name]]</label>
-                        <paper-button raised on-tap="_closePanel">
-                            Close
-                        </paper-button>
-                    </div>
-                </iron-collapse>
+            <div class="form-container" hidden=[[!formOpened]]>
+                <div class="layout horizontal center form-header">
+                    <iron-icon icon="arrow-back" on-tap="_closePanel"></iron-icon>
+                    <label>[[selectedTask.name]]</label>
+                </div>
+                <div class="form-panel" id="task-form-container">
+                       
+                </div>
             </div>
         </div>
     </template>
@@ -349,7 +355,11 @@
             },
             _closePanel: function () {
                 this.set('formOpened', false);
-            }
+            },
+            _getDateTime:function(s){
+                var d = new Date(s);
+                return d.toLocaleDateString() + "  " + d.toLocaleTimeString();
+            },
         })
     </script>
 </dom-module>
