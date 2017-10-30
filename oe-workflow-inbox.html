@@ -93,11 +93,11 @@
             .item-status-icon {
                 margin-right: 16px;
                 margin-top: 4px;
-                color:#FF9800;
+                color: #FF9800;
             }
 
-            .item-status-pending{
-                color:grey;
+            .item-status-pending {
+                color: grey;
             }
 
             .form-panel {
@@ -123,31 +123,31 @@
                         <paper-tab>
                             <div class="tab-sections">
                                 <label class="tab-name">Total</label>
-                                <label class="tab-count">12</label>
+                                <label class="tab-count">[[items.length]]</label>
                             </div>
                         </paper-tab>
                         <paper-tab>
                             <div class="tab-sections">
                                 <label class="tab-name">Roles</label>
-                                <label class="tab-count">3</label>
+                                <label class="tab-count">[[roles]]</label>
                             </div>
                         </paper-tab>
                         <paper-tab>
                             <div class="tab-sections">
                                 <label class="tab-name">Pending</label>
-                                <label class="tab-count">5</label>
+                                <label class="tab-count">[[penddingItems]]</label>
                             </div>
                         </paper-tab>
                         <paper-tab>
                             <div class="tab-sections">
                                 <label class="tab-name">Completed</label>
-                                <label class="tab-count">7</label>
+                                <label class="tab-count">[[completedItems]]</label>
                             </div>
                         </paper-tab>
                     </paper-tabs>
                 </div>
                 <div class="list-panel">
-                    <iron-list class="work-items-list" items="[[items]]">
+                    <iron-list class="work-items-list" items="[[_getItems(items, selectedTab)]]">
                         <template>
                             <div class="work-item layout horizontal center justified" on-tap="_launchItem">
                                 <div class="item-detail layout horizontal start">
@@ -181,130 +181,169 @@
         Polymer({
             is: "oe-workflow-inbox",
             behaviors: [],
-            listeners: {'oe-task-completed':'_closePanel'},
-            _getStatusIcon:function(status){
+            listeners: { 'oe-task-completed': '_closePanel' },
+            _getStatusIcon: function (status) {
                 return status === "pending" ? "info" : "star"
+            },
+            _getItems: function (tasks, type) {
+                var list = [];
+                switch (type) {
+                    case 2:
+                        list = tasks.filter(function (task) {
+                            return task.status === 'pending';
+                        });
+                        break;
+                    case 3:
+                        list = tasks.filter(function (task) {
+                            return task.status === 'complete';
+                        });
+                        break;
+                    case 1:
+                        list = tasks.filter(function (task) {
+                            return (task.candidateRoles && task.candidateRoles.length > 0);
+                        });
+                        break;
+                    default:
+                        list = tasks.slice();
+                }
+                return list;
+            },
+            _getTasks: function (type, cb) {
+                if (this.items && this.items.length > 0) {
+                    cb(err, this._getItems(this.items, type));
+                } else {
+                    this.makeAjaxCall('/api/Tasks', 'get', null, null, null, null, function (err, tasks) {
+                        cb(err, this._getItems(tasks || [], type));
+                    }.bind(this));
+                }
+            },
+            _init: function () {
+                this.makeAjaxCall('/api/BaseUsers/session', 'get', null, null, null, null, function (err, res) {
+                    if (err) {
+                        return;
+                    } else {
+                        var curr_roles = res.roles || [];
+                        this._getTasks(null, function (err, tasks) {
+                            var roles = 0, pending = 0, interrupted = 0, complete = 0;
+                            if (err) {
+                                return;
+                            } else {
+                                tasks.forEach(function (task) {
+                                    pending += task.status === 'pending' ? 1 : 0;
+                                    interrupted += task.status === 'interrupted' ? 1 : 0;
+                                    if (curr_roles.length > 0 && task.candidateRoles && task.candidateRoles.length > 0) {
+                                        roles += curr_roles.some(function (role) {
+                                            return task.candidateRoles.includes(role);
+                                        }) ? 1 : 0;
+                                    }
+                                });
+                                complete = tasks.length - pending;
+                                this.set('items', tasks);
+                                this.set('roles', roles);
+                                this.set('penddingItems', pending);
+                                this.set('interruptedItems', interrupted);
+                                this.set('completedItems', complete);
+                            }
+                        }.bind(this));
+                    }
+                }.bind(this));
+            },
+            makeAjaxCall: function (url, method, body, header, params, ajaxProps, cb) {
+
+                ajaxProps = ajaxProps || {};
+                if (!cb && typeof ajaxProps === 'function') {
+                    cb = ajaxProps;
+                    ajaxProps = {};
+                }
+
+                var ajax = document.createElement('oe-ajax');
+                ajax.contentType = ajaxProps.contentType || 'application/json';
+                ajax.handleAs = ajaxProps.handleAs || 'json';
+                ajax.url = url;
+                ajax.method = method.toUpperCase();
+                if (ajax.method == 'GET') {
+                    params = params || {};
+                    params.filter = params.filter || {};
+                    params.filter.scope = {};
+                }
+                if (params) {
+                    if (params.filter) {
+                        params.filter = JSON.stringify(params.filter);
+                    }
+                    ajax.params = params;
+                }
+                if (body) {
+                    delete body._scope;
+                    delete body.score;
+                    ajax.body = JSON.stringify(body);
+                }
+
+                if (header) {
+                    Object.keys(header).forEach(function (k) {
+                        var val = header[k];
+                        if (Array.isArray(val)) {
+                            ajax.headers[k] = val[0]
+                        } else {
+                            ajax.headers[k] = val
+                        }
+
+                    })
+                }
+
+                ajax.addEventListener('response', function (event) {
+                    if (cb) {
+                        cb(null, event.detail.response);
+                    }
+                }.bind(this));
+                ajax.addEventListener('error', function (err) {
+                    if (cb) {
+                        cb(err);
+                    }
+                }.bind(this));
+                ajax.generateRequest();
             },
             attached: function () {
                 this.set('selectedTab', 0);
                 this.set('formOpened', false);
-                this.set('items', [{
-                    "_id": ("59e48379883631802be7f997"),
-                    "name": "UserTask 1",
-                    "status": "pending",
-                    "processTokenId": "a3495e6b-1a26-4ca7-9c66-6a9986e75935",
-                    "candidateUsers": [
-                        "tony"
-                    ],
-                    "formKey": "SimpleApprovalForm",
-                    "formType": "FormKey",
-                    "formVariables": {
-                        "fromDate": "11/07/2014",
-                        "toDate": "14/07/2014",
-                        "comments": "Going home for Diwali"
-                    },
-                    "processInstanceId": ("59e48379883631802be7f995"),
-                    "_modifiedBy": "user1",
-                    "_modifiedOn": ("2017-10-16T15:31:33.714+05:30"),
-                    "_isDeleted": false,
-                    "_version": "f0568bec-714c-41f3-a0f9-d7541dbf2f89",
-                    "workflowInstanceId": ("59e48379883631802be7f994")
-                }, {
-                    "_id": ("59e48379883631802be7f997"),
-                    "name": "Leave Application",
-                    "status": "pending",
-                    "processTokenId": "a3495e6b-1a26-4ca7-9c66-6a9986e75935",
-                    "candidateUsers": [
-                        "tony"
-                    ],
-                    "formKey": "leave-approval-form",
-                    "formType": "FormKey",
-                    "formVariables": {
-                        "duration": "3 days",
-                        "name": "Goku",
-                        "reason": "Going to participate in intergalactic martial arts tournament"
-                    },
-                    "processInstanceId": ("59e48379883631802be7f995"),
-                    "_modifiedBy": "user1",
-                    "_modifiedOn": ("2017-10-16T15:31:33.714+05:30"),
-                    "_isDeleted": false,
-                    "_version": "f0568bec-714c-41f3-a0f9-d7541dbf2f89",
-                    "workflowInstanceId": ("59e48379883631802be7f994")
-                }, {
-                    "_id": ("59e48379883631802be7f997"),
-                    "name": "Group Task 1",
-                    "status": "completed",
-                    "processTokenId": "a3495e6b-1a26-4ca7-9c66-6a9986e75935",
-                    "candidateUsers": [
-                        "tony"
-                    ],
-                    "formKey": "SimpleApprovalForm",
-                    "formType": "FormKey",
-                    "formVariables": {
-                        "fromDate": "11/07/2014",
-                        "toDate": "14/07/2014",
-                        "comments": "Going home for Diwali"
-                    },
-                    "processInstanceId": ("59e48379883631802be7f995"),
-                    "_modifiedBy": "user1",
-                    "_modifiedOn": ("2017-10-16T15:31:33.714+05:30"),
-                    "_isDeleted": false,
-                    "_version": "f0568bec-714c-41f3-a0f9-d7541dbf2f89",
-                    "workflowInstanceId": ("59e48379883631802be7f994")
-                }, {
-                    "_id": ("59e48379883631802be7f997"),
-                    "name": "Group Task 2",
-                    "status": "pending",
-                    "processTokenId": "a3495e6b-1a26-4ca7-9c66-6a9986e75935",
-                    "candidateUsers": [
-                        "tony"
-                    ],
-                    "formKey": "SimpleApprovalForm",
-                    "formType": "FormKey",
-                    "formVariables": {
-                        "fromDate": "11/07/2014",
-                        "toDate": "14/07/2014",
-                        "comments": "Going home for Diwali"
-                    },
-                    "processInstanceId": ("59e48379883631802be7f995"),
-                    "_modifiedBy": "user1",
-                    "_modifiedOn": ("2017-10-16T15:31:33.714+05:30"),
-                    "_isDeleted": false,
-                    "_version": "f0568bec-714c-41f3-a0f9-d7541dbf2f89",
-                    "workflowInstanceId": ("59e48379883631802be7f994")
-                }]);
+                this._init();
             },
             _launchItem: function (e) {
                 var task = e.model.item;
+                if (task.status === 'complete') {
+                    return;
+                }
                 var formType = task.formType;
                 this.set('selectedTask', task);
-                if(formType === "FormKey"){
-                    var isPresent = Polymer.telemetry.registrations.find(function(f){
-                            return f.is == task.formKey
-                    });
-                    if(!isPresent){
-                        var url = task.formKey + '.html';
-                        Polymer.Base.importHref(url,function(e){
-                            this.loadElement()
-                        }.bind(this),function(err){
-                            this.fire('oe-show-error',"Error fetching the form");
+                if (formType === "FormKey") {
+                    var ele = task.formKey;
+                    if (ele.endsWith('.html')) {
+                        //handle url for import
+                        Polymer.Base.importHref(ele, function (e) {
+                            var domModule = e.target.import.body.querySelector('dom-module');
+                            if (domModule) {
+                                var eleName = domModule.id;
+                                this.loadElement(eleName)
+                            } else {
+                                //handle HTML partial
+                            }
+                        }.bind(this), function (err) {
+                            this.fire('oe-show-error', "Error fetching the form");
                             this._closePanel();
                         }.bind(this))
-                    }else{
-                        this.loadElement()
+                    } else {
+                        //handle element asuming ele is already imported
+                        this.loadElement(ele)
                     }
-                }else{
-
+                } else {
+                    this.fire('oe-show-error', "No form key present for this task");
                 }
-                
             },
-            loadElement:function(){
-                var eleName = this.selectedTask.formKey;
+            loadElement: function (eleName) {
                 var container = this.querySelector('#task-form-container');
                 container.innerHTML = "";
                 Polymer.dom.flush();
                 var formEle = document.createElement(eleName);
-                formEle.set('taskInfo',this.selectedTask.formVariables);
+                formEle.set('taskInfo', this.selectedTask.formVariables);
                 container.appendChild(formEle);
                 this.set('formOpened', true);
             },
