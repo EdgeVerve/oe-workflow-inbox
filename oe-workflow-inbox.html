@@ -114,6 +114,14 @@
             .form-header iron-icon{
                 margin: 0px 16px;
             }
+
+            .search-input {
+                margin: 0px 16px;
+            }
+            .search-input iron-icon{
+                --iron-icon-width:16px;
+                --iron-icon-height:16px;
+            }
         </style>
         <div class="component-container">
             <div class="table-container" hidden=[[formOpened]]>
@@ -121,8 +129,12 @@
                     <label>
                         Workitems
                     </label>
-                    <div class="options">
-                        <iron-icon icon="search"></iron-icon>
+                    <div class="options layout horizontal center justified">
+                        <iron-icon icon="refresh" on-tap="_init"></iron-icon>
+                        <paper-input class="search-input" value="{{searchKey}}" label="Search By Name..." no-label-float>
+                            <iron-icon prefix icon="search"></iron-icon>
+                            <iron-icon suffix icon="clear" on-tap="_clearSearch"></iron-icon>
+                        </paper-input>
                     </div>
                 </div>
                 <div class="table-tabs">
@@ -154,7 +166,7 @@
                     </paper-tabs>
                 </div>
                 <div class="list-panel">
-                    <iron-list class="work-items-list" items="[[_getItems(items, selectedTab)]]">
+                    <iron-list class="work-items-list" items="[[_getItems(items, selectedTab,searchKey)]]">
                         <template>
                             <div class="work-item layout horizontal center justified" on-tap="_launchItem">
                                 <div class="item-detail layout horizontal start">
@@ -164,7 +176,7 @@
                                         <label class="item-date">[[_getDateTime(item._modifiedOn)]]</label>
                                     </div>
                                 </div>
-                                <div class="item-options">
+                                <div class="item-options" hidden>
                                     <iron-icon icon="create"></iron-icon>
                                 </div>
                             </div>
@@ -191,7 +203,7 @@
             _getStatusIcon: function (status) {
                 return status === "pending" ? "info" : "star"
             },
-            _getItems: function (tasks, type) {
+            _getItems: function (tasks, type,searchKey) {
                 var list = [];
                 switch (type) {
                     case 2:
@@ -212,16 +224,17 @@
                     default:
                         list = tasks.slice();
                 }
+                if(searchKey && searchKey.length > 0 ){
+                    return list.filter(function(task){
+                        return task.name.match(searchKey);
+                    })
+                }
                 return list;
             },
             _getTasks: function (type, cb) {
-                if (this.items && this.items.length > 0) {
-                    cb(err, this._getItems(this.items, type));
-                } else {
-                    this.makeAjaxCall('/api/Tasks', 'get', null, null, null, null, function (err, tasks) {
-                        cb(err, this._getItems(tasks || [], type));
-                    }.bind(this));
-                }
+                this.makeAjaxCall('/api/Tasks', 'get', null, null, null, null, function (err, tasks) {
+                    cb(err,this._getItems(tasks || [], type));
+                }.bind(this));
             },
             _init: function () {
                 this.makeAjaxCall('/api/BaseUsers/session', 'get', null, null, null, null, function (err, res) {
@@ -350,11 +363,16 @@
                 Polymer.dom.flush();
                 var formEle = document.createElement(eleName);
                 formEle.set('taskInfo', this.selectedTask.formVariables);
+                formEle.set('_task', this.selectedTask);
                 container.appendChild(formEle);
                 this.set('formOpened', true);
             },
             _closePanel: function () {
                 this.set('formOpened', false);
+                this._init();
+            },
+            _clearSearch:function(){
+                this.set('searchKey','');
             },
             _getDateTime:function(s){
                 var d = new Date(s);
