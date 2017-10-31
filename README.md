@@ -30,6 +30,7 @@ completeTask : It accepts a payload, id and a callback function.The payload data
 
 ## Usage
 Follow the below steps to setup oe-workflow-inbox:
+
 1)Add oe-workflow-inbox as a bower dependency to your application.
 
 2)Add a new UI Route to access the tasks.
@@ -40,6 +41,7 @@ example :
                 path : /my-tasks
                 import : bower_components/oe-workflow-inbox/oe-workflow-inbox.html
 }
+
 3)Add a Navigation Link.
 Example :
 {
@@ -48,13 +50,14 @@ Example :
                 url : /my-tasks
                 group : root
 }
+
 4)Open oe-studio and goto workflow-modeler
                 Open the required workflow(e.g. Loan application present in CASSI Bank)
                 Select user task, goto the forms tab in the right panel and enter the element name or import path in formKey.
                 Save with a new name and version then save and publish.
+
 5)Goto model designer
                 Open the model to which workflow is to be attached(e.g. LoanApplication) in grid view.
                 Select options goto attach workflow-inbox
                 Select oe-worklfow
                 Add the new workflow created above with a process name(e.g.LoanApplicationNew)
-
