@@ -7,19 +7,19 @@ Role : All the tasks assigned to the roles
 Pending : All the pending tasks for that user/role
 Completed : All completed tasks for that user/role
 
-##Search
+## Search
 User can search a particular task based on its name.
 
-##Refresh
+## Refresh
 Fetches the updated list of tasks.
 
-##Task Action
+## Task Action
 Clicking on a pending task launches a custom form associated with the task.
 oe-workflow-modeler can be used to associate a polymer form to the user  task.
 User task contains a formKey which takes the custom element's name/import path(if import path is given, it will be imported by oe-workflow-inbox)
 This custom form can use oe-workflow-form-behavior to complete the current task.
 
-##oe-workflow-form-behavior
+## oe-workflow-form-behavior
 It contains the following properties :
 taskInfo : It contains model data.
 _task : It contains the entire task object.
@@ -28,7 +28,7 @@ It contains the following methods :
 makeAjaxCall : It can be used to perform server calls.
 completeTask : It accepts a payload, id and a callback function.The payload data should be handled by the form as it varies from task to task.
 
-##Usage
+## Usage
 Follow the below steps to setup oe-workflow-inbox:
 1)Add oe-workflow-inbox as a bower dependency to your application.
 
