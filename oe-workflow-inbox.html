@@ -1,4 +1,5 @@
 <link rel="import" href="../iron-flex-layout/classes/iron-flex-layout.html">
+<link rel="import" href="../oe-utils/oe-common-behaviors.html">
 <dom-module id="oe-workflow-inbox">
     <template>
         <style is="custom-style" include="iron-flex iron-flex-alignment iron-flex-reverse iron-flex-factors iron-positioning"></style>
@@ -106,21 +107,23 @@
                 max-height: 600px;
                 overflow: auto;
             }
-            .form-header{
-                height:48px;
+
+            .form-header {
+                height: 48px;
                 background: #FFF;
             }
 
-            .form-header iron-icon{
+            .form-header iron-icon {
                 margin: 0px 16px;
             }
 
             .search-input {
                 margin: 0px 16px;
             }
-            .search-input iron-icon{
-                --iron-icon-width:16px;
-                --iron-icon-height:16px;
+
+            .search-input iron-icon {
+                --iron-icon-width: 16px;
+                --iron-icon-height: 16px;
             }
         </style>
         <div class="component-container">
@@ -130,7 +133,7 @@
                         Workitems
                     </label>
                     <div class="options layout horizontal center justified">
-                        <iron-icon icon="refresh" on-tap="_init"></iron-icon>
+                        <iron-icon icon="refresh" on-tap="refreshList"></iron-icon>
                         <paper-input class="search-input" value="{{searchKey}}" label="Search By Name..." no-label-float>
                             <iron-icon prefix icon="search"></iron-icon>
                             <iron-icon suffix icon="clear" on-tap="_clearSearch"></iron-icon>
@@ -166,21 +169,8 @@
                     </paper-tabs>
                 </div>
                 <div class="list-panel">
-                    <iron-list class="work-items-list" items="[[_getItems(items, selectedTab,searchKey)]]">
-                        <template>
-                            <div class="work-item layout horizontal center justified" on-tap="_launchItem">
-                                <div class="item-detail layout horizontal start">
-                                    <iron-icon icon$="[[_getStatusIcon(item.status)]]" class$="item-status-icon item-status-[[item.status]]"></iron-icon>
-                                    <div class="layout vertical justified">
-                                        <label class="item-name">[[item.name]]</label>
-                                        <label class="item-date">[[_getDateTime(item._modifiedOn)]]</label>
-                                    </div>
-                                </div>
-                                <div class="item-options" hidden>
-                                    <iron-icon icon="create"></iron-icon>
-                                </div>
-                            </div>
-                        </template>
+                    <iron-list class="work-items-list" items="[[_getItems(items, selectedTab,searchKey)]]" id="itemlist">
+                        <content></content>
                     </iron-list>
                 </div>
             </div>
@@ -190,20 +180,36 @@
                     <label>[[selectedTask.name]]</label>
                 </div>
                 <div class="form-panel" id="task-form-container">
-                       
+
                 </div>
             </div>
+            <template default-template>
+                <div class="work-item layout horizontal center justified" on-tap="launchTask">
+                    <div class="item-detail layout horizontal start">
+                        <iron-icon icon$="[[_getStatusIcon(item.status)]]" class$="item-status-icon item-status-[[item.status]]"></iron-icon>
+                        <div class="layout vertical justified">
+                            <label class="item-name">[[item.name]]</label>
+                            <label class="item-date">[[_getDateTime(item._modifiedOn)]]</label>
+                        </div>
+                    </div>
+                    <div class="item-options" hidden>
+                        <iron-icon icon="create"></iron-icon>
+                    </div>
+                </div>
+            </template>
         </div>
     </template>
     <script>
         Polymer({
             is: "oe-workflow-inbox",
-            behaviors: [],
-            listeners: { 'oe-task-completed': '_closePanel' },
+            behaviors: [OEUtils.AjaxBehavior],
+            listeners: {
+                'oe-task-completed': '_closePanel'
+            },
             _getStatusIcon: function (status) {
                 return status === "pending" ? "info" : "star"
             },
-            _getItems: function (tasks, type,searchKey) {
+            _getItems: function (tasks, type, searchKey) {
                 var list = [];
                 switch (type) {
                     case 2:
@@ -224,109 +230,89 @@
                     default:
                         list = tasks.slice();
                 }
-                if(searchKey && searchKey.length > 0 ){
-                    return list.filter(function(task){
+                if (searchKey && searchKey.length > 0) {
+                    return list.filter(function (task) {
                         return task.name.match(searchKey);
                     })
                 }
                 return list;
             },
             _getTasks: function (type, cb) {
-                this.makeAjaxCall('/api/Tasks', 'get', null, null, null, null, function (err, tasks) {
-                    cb(err,this._getItems(tasks || [], type));
+                this.makeAjaxCall('/api/Tasks', 'get', null, null, null, function (err, tasks) {
+                    cb(err, this._getItems(tasks || [], type));
                 }.bind(this));
             },
-            _init: function () {
-                this.makeAjaxCall('/api/BaseUsers/session', 'get', null, null, null, null, function (err, res) {
+            refreshList: function () {
+                var curr_roles = this.userRoles;
+                this._getTasks(null, function (err, tasks) {
+                    var roles = 0,
+                        pending = 0,
+                        interrupted = 0,
+                        complete = 0;
                     if (err) {
                         return;
                     } else {
-                        var curr_roles = res.roles || [];
-                        this._getTasks(null, function (err, tasks) {
-                            var roles = 0, pending = 0, interrupted = 0, complete = 0;
-                            if (err) {
-                                return;
-                            } else {
-                                tasks.forEach(function (task) {
-                                    pending += task.status === 'pending' ? 1 : 0;
-                                    interrupted += task.status === 'interrupted' ? 1 : 0;
-                                    if (curr_roles.length > 0 && task.candidateRoles && task.candidateRoles.length > 0) {
-                                        roles += curr_roles.some(function (role) {
-                                            return task.candidateRoles.includes(role);
-                                        }) ? 1 : 0;
-                                    }
-                                });
-                                complete = tasks.length - pending;
-                                this.set('items', tasks);
-                                this.set('roles', roles);
-                                this.set('penddingItems', pending);
-                                this.set('interruptedItems', interrupted);
-                                this.set('completedItems', complete);
+                        tasks.forEach(function (task) {
+                            pending += task.status === 'pending' ? 1 : 0;
+                            interrupted += task.status === 'interrupted' ?
+                                1 : 0;
+                            if (curr_roles.length > 0 && task.candidateRoles &&
+                                task.candidateRoles.length > 0) {
+                                roles += curr_roles.some(function (role) {
+                                    return task.candidateRoles.includes(
+                                        role);
+                                }) ? 1 : 0;
                             }
-                        }.bind(this));
+                        });
+                        complete = tasks.length - pending;
+                        this.set('items', tasks);
+                        this.set('roles', roles);
+                        this.set('penddingItems', pending);
+                        this.set('interruptedItems', interrupted);
+                        this.set('completedItems', complete);
                     }
                 }.bind(this));
             },
-            makeAjaxCall: function (url, method, body, header, params, ajaxProps, cb) {
-
-                ajaxProps = ajaxProps || {};
-                if (!cb && typeof ajaxProps === 'function') {
-                    cb = ajaxProps;
-                    ajaxProps = {};
-                }
-
-                var ajax = document.createElement('oe-ajax');
-                ajax.contentType = ajaxProps.contentType || 'application/json';
-                ajax.handleAs = ajaxProps.handleAs || 'json';
-                ajax.url = url;
-                ajax.method = method.toUpperCase();
-                if (ajax.method == 'GET') {
-                    params = params || {};
-                    params.filter = params.filter || {};
-                    params.filter.scope = {};
-                }
-                if (params) {
-                    if (params.filter) {
-                        params.filter = JSON.stringify(params.filter);
-                    }
-                    ajax.params = params;
-                }
-                if (body) {
-                    delete body._scope;
-                    delete body.score;
-                    ajax.body = JSON.stringify(body);
-                }
-
-                if (header) {
-                    Object.keys(header).forEach(function (k) {
-                        var val = header[k];
-                        if (Array.isArray(val)) {
-                            ajax.headers[k] = val[0]
-                        } else {
-                            ajax.headers[k] = val
-                        }
-
-                    })
-                }
-
-                ajax.addEventListener('response', function (event) {
-                    if (cb) {
-                        cb(null, event.detail.response);
+            _init: function () {
+                this.set('formOpened', false);
+                this.makeAjaxCall('/api/BaseUsers/session', 'get', null, null, null, function (err,
+                    res) {
+                    if (err) {
+                        return;
+                    } else {
+                        this.set('userRoles', res.roles || []);
+                        this.refreshList();
                     }
                 }.bind(this));
-                ajax.addEventListener('error', function (err) {
-                    if (cb) {
-                        cb(err);
-                    }
-                }.bind(this));
-                ajax.generateRequest();
+            },
+            ready: function () {
+                var childTemplate = this.queryEffectiveChildren('template');
+                if (!childTemplate) {
+                    var defaultTemplate = this.querySelector('template[default-template]');
+                    var items = this.$.itemlist;
+                    Polymer.dom(items).appendChild(defaultTemplate);
+                    Polymer.dom.flush();
+                }
             },
             attached: function () {
                 this.set('selectedTab', 0);
-                this.set('formOpened', false);
                 this._init();
             },
-            _launchItem: function (e) {
+            importForm: function (importPath) {
+                Polymer.Base.importHref(importPath, function (e) {
+                    var domModule = e.target.import.body.querySelector('dom-module');
+                    if (domModule) {
+                        var eleName = domModule.id;
+                        this.loadElement(eleName)
+                    } else {
+                        //[TODO]handle HTML partial
+                    }
+                }.bind(this), function (err) {
+                    this.fire('oe-show-error', "Error fetching the form");
+                    this._closePanel();
+                }.bind(this))
+            },
+            launchTask: function (e) {
                 var task = e.model.item;
                 if (task.status === 'complete') {
                     return;
@@ -334,24 +320,23 @@
                 var formType = task.formType;
                 this.set('selectedTask', task);
                 if (formType === "FormKey") {
-                    var ele = task.formKey;
-                    if (ele.endsWith('.html')) {
-                        //handle url for import
-                        Polymer.Base.importHref(ele, function (e) {
-                            var domModule = e.target.import.body.querySelector('dom-module');
-                            if (domModule) {
-                                var eleName = domModule.id;
-                                this.loadElement(eleName)
-                            } else {
-                                //handle HTML partial
-                            }
-                        }.bind(this), function (err) {
-                            this.fire('oe-show-error', "Error fetching the form");
-                            this._closePanel();
-                        }.bind(this))
-                    } else {
-                        //handle element asuming ele is already imported
-                        this.loadElement(ele)
+                    var actionType = task.formKey.split(':')[0];
+                    var actionValue = task.formKey.split(':')[1];
+                    if (actionType) {
+                        switch (actionType) {
+                            case "import":
+                                this.importForm(actionValue);
+                                break;
+                            case "elem":
+                                this.loadElement(actionValue);
+                                break;
+                            case "event":
+                                this.fire(actionValue, task);
+                                break;
+                            default:
+                                this.fire('oe-show-error', "Invalid form key");
+                                break;
+                        }
                     }
                 } else {
                     this.fire('oe-show-error', "No form key present for this task");
@@ -369,15 +354,21 @@
             },
             _closePanel: function () {
                 this.set('formOpened', false);
-                this._init();
+                this.refreshList();
             },
-            _clearSearch:function(){
-                this.set('searchKey','');
+            _clearSearch: function () {
+                this.set('searchKey', '');
             },
-            _getDateTime:function(s){
+            _getDateTime: function (s) {
                 var d = new Date(s);
                 return d.toLocaleDateString() + "  " + d.toLocaleTimeString();
             },
+            fireEvent: function (ev) {
+                ev.stopPropagation();
+                var eventName = ev.currentTarget && ev.currentTarget.getAttribute('event-name');
+                var payload = ev.model.item;
+                this.fire(eventName, payload);
+            }
         })
     </script>
 </dom-module>
