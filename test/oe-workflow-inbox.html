@@ -24,7 +24,7 @@ Any unauthorized reproduction, storage, transmission in any form or by any means
   <script src="../../fakerest/dist/FakeRest.min.js"></script>
 
   <link rel="import" href="../oe-workflow-inbox.html">
-  <link rel="import" href="../../paper-button/paper-button.html">
+
 
 </head>
 
@@ -51,7 +51,8 @@ Any unauthorized reproduction, storage, transmission in any form or by any means
   <script>
     suite('oe-workflow-inbox', function () {
       var server;
-      var xhr, requests, ele;
+      var testElement;
+      var xhr, requests;
       var userSession = {
         "username": "judith",
         "userid": "3bca9774-f4d9-11e6-bc64-92361f002003",
@@ -136,8 +137,8 @@ Any unauthorized reproduction, storage, transmission in any form or by any means
         "_version": "63e51f76-c8bb-4466-88d2-cf3adf508b35",
         "workflowInstanceId": "5a3240529b4a74ac28da0c10"
       }];
-
-      setup(function (done) {
+      
+      setup(function () {
 
         xhr = sinon.useFakeXMLHttpRequest();
         requests = [];
@@ -154,14 +155,17 @@ Any unauthorized reproduction, storage, transmission in any form or by any means
         server.respondWith('GET', /\/api\/BaseUsers\/session/, function (req) {
           req.respond(200, 'application/json', JSON.stringify(userSession));
         });
+        testElement = fixture('basic');
       });
       teardown(function () {
         xhr.restore();
         server.restore();
       });
+
       test('Testing initial setup', function (done) {
         flush(function () {
-          assert.equal(ele.routesList.length, UIRoutes.length);
+          assert.equal(testElement.userRoles.length, userSession.roles.length);
+          assert.equal(testElement.items.length, tasks.length);
           done();
         })
       });
