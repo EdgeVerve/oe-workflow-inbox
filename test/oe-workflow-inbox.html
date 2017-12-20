@@ -24,8 +24,8 @@ Any unauthorized reproduction, storage, transmission in any form or by any means
   <script src="../../fakerest/dist/FakeRest.min.js"></script>
 
   <link rel="import" href="../oe-workflow-inbox.html">
-
-
+  <link rel="import" href="disbursal-acceptance.html">
+  
 </head>
 
 <body>
@@ -39,11 +39,13 @@ Any unauthorized reproduction, storage, transmission in any form or by any means
   <test-fixture id="templated">
     <template>
       <oe-workflow-inbox>
-        <div class="layout horizontal justified center">
+        <template>
+        <div class="layout horizontal justified center task-item">
           <label>Amount : [[item.formVariables.amount]]</label>
           <span>Risk : [[item.formVariables.amount]]</span>
           <paper-button on-tap="fireEvent" event-name="custom-action">Action</paper-button>
         </div>
+      </template>
       </oe-workflow-inbox>
     </template>
   </test-fixture>
@@ -60,84 +62,137 @@ Any unauthorized reproduction, storage, transmission in any form or by any means
         "roles": ["customer"]
       };
       var tasks = [{
-        "name": "Upload Documents",
-        "status": "complete",
-        "processTokenId": "56a99220-844b-4607-a60b-2799bb885f2e",
-        "candidateUsers": ["judith"],
-        "formKey": "import:elements/user-upload-task-form.html",
-        "formType": "FormKey",
-        "formVariables": {
-          "type": "PERSONAL_LOAN",
-          "amount": 1,
-          "currency": "USD",
-          "tenure": 60,
+          "name": "Upload Documents",
           "status": "pending",
-          "employment": {
-            "employmentType": "SELF_EMPLOYED",
-            "monthlyIncome": 1000000,
-            "_isDeleted": false,
-            "currentHostName": "BLREQX132640L",
-            "currentUpdateTime": "2017-12-14T09:09:00.115Z",
-            "oldHostName": "BLREQX132640L",
-            "oldUpdateTime": "2017-12-14T09:09:00.115Z"
+          "processTokenId": "56a99220-844b-4607-a60b-2799bb885f2e",
+          "candidateUsers": ["judith"],
+          "formKey": "import:task-form.html",
+          "formType": "FormKey",
+          "formVariables": {
+            "type": "PERSONAL_LOAN",
+            "amount": 1,
+            "currency": "USD",
+            "tenure": 60,
+            "status": "pending",
+            "employment": {
+              "employmentType": "SELF_EMPLOYED",
+              "monthlyIncome": 1000000,
+              "_isDeleted": false,
+              "currentHostName": "BLREQX132640L",
+              "currentUpdateTime": "2017-12-14T09:09:00.115Z",
+              "oldHostName": "BLREQX132640L",
+              "oldUpdateTime": "2017-12-14T09:09:00.115Z"
+            },
+            "incomeSources": [],
+            "repaymentMode": {
+              "_isDeleted": false,
+              "currentHostName": "BLREQX132640L",
+              "currentUpdateTime": "2017-12-14T09:09:00.155Z",
+              "oldHostName": "BLREQX132640L",
+              "oldUpdateTime": "2017-12-14T09:09:00.155Z"
+            },
+            "id": "5a3240529b4a74ac28da0c0f",
+            "_type": "LoanApplication",
+            "_createdBy": "judith",
+            "_modifiedBy": "judith",
+            "_workflowInstanceId": "5a3240529b4a74ac28da0c10",
+            "risk": "dummyValue",
+            "_updates": {
+              "set": {},
+              "unset": {}
+            }
           },
-          "incomeSources": [],
-          "repaymentMode": {
-            "_isDeleted": false,
-            "currentHostName": "BLREQX132640L",
-            "currentUpdateTime": "2017-12-14T09:09:00.155Z",
-            "oldHostName": "BLREQX132640L",
-            "oldUpdateTime": "2017-12-14T09:09:00.155Z"
-          },
-          "id": "5a3240529b4a74ac28da0c0f",
-          "_type": "LoanApplication",
+          "id": "5a3240539b4a74ac28da0c1a",
+          "processInstanceId": "5a3240529b4a74ac28da0c11",
+          "_type": "Task",
           "_createdBy": "judith",
           "_modifiedBy": "judith",
-          "_workflowInstanceId": "5a3240529b4a74ac28da0c10",
-          "risk": "dummyValue",
-          "_updates": {
-            "set": {},
-            "unset": {}
-          }
-        },
-        "id": "5a3240539b4a74ac28da0c1a",
-        "processInstanceId": "5a3240529b4a74ac28da0c11",
-        "_type": "Task",
-        "_createdBy": "judith",
-        "_modifiedBy": "judith",
-        "_createdOn": "2017-12-14T09:11:47.881Z",
-        "_modifiedOn": "2017-12-18T07:21:15.309Z",
-        "_isDeleted": false,
-        "_oldVersion": "4243e706-5ecd-4ded-ba8f-df05b42fa3a6",
-        "_version": "390ad77f-7f2f-4e8e-a9f6-6b7a1879e236",
-        "workflowInstanceId": "5a3240529b4a74ac28da0c10"
-      }, {
-        "name": "Request for Disbursing Amount",
-        "status": "pending",
-        "processTokenId": "206c5d2b-31ba-44e4-b396-acf6102da5ca",
-        "candidateUsers": ["judith"],
-        "formKey": "event:disbursal-acceptance",
-        "formType": "FormKey",
-        "formVariables": {
-          "type": "PERSONAL_LOAN",
-          "amount": 1,
-          "currency": "USD",
-          "tenure": 60,
+          "_createdOn": "2017-12-14T09:11:47.881Z",
+          "_modifiedOn": "2017-12-18T07:21:15.309Z",
+          "_isDeleted": false,
+          "_oldVersion": "4243e706-5ecd-4ded-ba8f-df05b42fa3a6",
+          "_version": "390ad77f-7f2f-4e8e-a9f6-6b7a1879e236",
+          "workflowInstanceId": "5a3240529b4a74ac28da0c10"
+        }, {
+          "name": "Request for Disbursing Amount",
           "status": "pending",
-          "dr_status": "approved"
+          "processTokenId": "206c5d2b-31ba-44e4-b396-acf6102da5ca",
+          "candidateUsers": ["judith"],
+          "formKey": "event:disbursal-acceptance",
+          "formType": "FormKey",
+          "formVariables": {
+            "type": "PERSONAL_LOAN",
+            "amount": 1,
+            "currency": "USD",
+            "tenure": 60,
+            "status": "pending",
+            "dr_status": "approved"
+          },
+          "id": "5a376d670fb150282ba0eb7e",
+          "processInstanceId": "5a3240529b4a74ac28da0c11",
+          "_type": "Task",
+          "_createdBy": "judith",
+          "_modifiedBy": "judith",
+          "_createdOn": "2017-12-18T07:25:27.629Z",
+          "_modifiedOn": "2017-12-18T07:25:27.629Z",
+          "_isDeleted": false,
+          "_version": "63e51f76-c8bb-4466-88d2-cf3adf508b35",
+          "workflowInstanceId": "5a3240529b4a74ac28da0c10"
+        }, {
+          "name": "Request for Disbursing Amount",
+          "status": "pending",
+          "processTokenId": "206c5d2b-31ba-44e4-b396-acf6102da5ca",
+          "candidateUsers": ["judith"],
+          "formKey": "elem:disbursal-acceptance",
+          "formType": "FormKey",
+          "formVariables": {
+            "type": "PERSONAL_LOAN",
+            "amount": 1,
+            "currency": "USD",
+            "tenure": 60,
+            "status": "pending",
+            "dr_status": "approved"
+          },
+          "id": "5a376d670fb150282ba0eb7e",
+          "processInstanceId": "5a3240529b4a74ac28da0c11",
+          "_type": "Task",
+          "_createdBy": "judith",
+          "_modifiedBy": "judith",
+          "_createdOn": "2017-12-18T07:25:27.629Z",
+          "_modifiedOn": "2017-12-18T07:25:27.629Z",
+          "_isDeleted": false,
+          "_version": "63e51f76-c8bb-4466-88d2-cf3adf508b35",
+          "workflowInstanceId": "5a3240529b4a74ac28da0c10"
         },
-        "id": "5a376d670fb150282ba0eb7e",
-        "processInstanceId": "5a3240529b4a74ac28da0c11",
-        "_type": "Task",
-        "_createdBy": "judith",
-        "_modifiedBy": "judith",
-        "_createdOn": "2017-12-18T07:25:27.629Z",
-        "_modifiedOn": "2017-12-18T07:25:27.629Z",
-        "_isDeleted": false,
-        "_version": "63e51f76-c8bb-4466-88d2-cf3adf508b35",
-        "workflowInstanceId": "5a3240529b4a74ac28da0c10"
-      }];
-      
+        {
+          "name": "Request for Disbursing Amount",
+          "status": "complete",
+          "processTokenId": "206c5d2b-31ba-44e4-b396-acf6102da5ca",
+          "candidateUsers": ["judith"],
+          "candidateRoles": ["customer"],
+          "formKey": "elem:disbursal-acceptance",
+          "formType": "FormKey",
+          "formVariables": {
+            "type": "PERSONAL_LOAN",
+            "amount": 1,
+            "currency": "USD",
+            "tenure": 60,
+            "status": "complete",
+            "dr_status": "approved"
+          },
+          "id": "5a376d670fb150282ba0eb7e",
+          "processInstanceId": "5a3240529b4a74ac28da0c11",
+          "_type": "Task",
+          "_createdBy": "judith",
+          "_modifiedBy": "judith",
+          "_createdOn": "2017-12-18T07:25:27.629Z",
+          "_modifiedOn": "2017-12-18T07:25:27.629Z",
+          "_isDeleted": false,
+          "_version": "63e51f76-c8bb-4466-88d2-cf3adf508b35",
+          "workflowInstanceId": "5a3240529b4a74ac28da0c10"
+        }
+      ];
+
       setup(function () {
 
         xhr = sinon.useFakeXMLHttpRequest();
@@ -156,6 +211,7 @@ Any unauthorized reproduction, storage, transmission in any form or by any means
           req.respond(200, 'application/json', JSON.stringify(userSession));
         });
         testElement = fixture('basic');
+        templateElement = fixture('templated');
       });
       teardown(function () {
         xhr.restore();
@@ -167,7 +223,87 @@ Any unauthorized reproduction, storage, transmission in any form or by any means
           assert.equal(testElement.userRoles.length, userSession.roles.length);
           assert.equal(testElement.items.length, tasks.length);
           done();
-        })
+        });
+      });
+
+      test('Testing tabs filtering', function (done) {
+        flush(function () {
+          assert.equal(testElement.userRoles.length, userSession.roles.length);
+          var tabs = testElement.querySelectorAll('paper-tab');
+          flush(function () {
+            tabs[0].click();
+            assert.equal(testElement.querySelectorAll('.work-item:not([hidden])').length, 4);
+            tabs[1].click();
+            flush(function () {
+              assert.equal(testElement.querySelectorAll('.work-item:not([hidden])').length, 1);
+              tabs[2].click();
+              flush(function () {
+                assert.equal(testElement.querySelectorAll('.work-item:not([hidden])').length, 3);
+                tabs[3].click();
+                flush(function () {
+                  assert.equal(testElement.querySelectorAll('.work-item:not([hidden])').length, 1);
+                  done();
+                });
+              });
+            })
+          });
+        });
+      });
+
+      test('Import type task handling', function (done) {
+        flush(function () {
+          var tasks = testElement.querySelectorAll('.work-item');
+          tasks[0].click();
+          flush(function () {
+            setTimeout(function () {
+              assert.equal(testElement.formOpened, true);
+              var formEle = testElement.querySelector('task-form');
+              assert.equal(formEle.is, 'task-form');
+              done();
+            }, 1000)
+          })
+        });
+      });
+
+      test('Event type task handling', function (done) {
+        var evListener = function (e) {
+          assert.equal(e.detail.name, "Request for Disbursing Amount");
+          testElement.removeEventListener('disbursal-acceptance', evListener)
+          done();
+        }
+        testElement.addEventListener('disbursal-acceptance', evListener);
+        flush(function () {
+          var tasks = testElement.querySelectorAll('.work-item');
+          tasks[1].click();
+        });
+      });
+
+      test('Element type task handling', function (done) {
+        flush(function () {
+          var tasks = testElement.querySelectorAll('.work-item');
+          tasks[2].click();
+          flush(function () {
+            setTimeout(function () {
+              assert.equal(testElement.formOpened, true);
+              var formEle = testElement.querySelector('disbursal-acceptance');
+              assert.equal(formEle.is, 'disbursal-acceptance');
+              done();
+            }, 1000)
+          })
+        });
+      });
+
+      test('Event type task handling', function (done) {
+        var evListener = function (e) {
+          assert.equal(e.detail.name, "Upload Documents");
+          templateElement.removeEventListener('custom-action', evListener)
+          done();
+        }
+        templateElement.addEventListener('custom-action', evListener);
+        flush(function () {
+          var qtaBtn = templateElement.querySelector('.task-item paper-button');
+          qtaBtn.click();
+        });
       });
     });
   </script>
