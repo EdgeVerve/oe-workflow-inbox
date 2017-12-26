@@ -1,5 +1,9 @@
+<link rel="import" href="../polymer/polymer.html">
 <link rel="import" href="../iron-flex-layout/classes/iron-flex-layout.html">
 <link rel="import" href="../oe-utils/oe-common-behaviors.html">
+<link rel="import" href="../oe-ajax/oe-ajax.html">
+<link rel="import" href="../paper-tabs/paper-tabs.html">
+<link rel="import" href="../iron-list/iron-list.html">
 <dom-module id="oe-workflow-inbox">
     <template>
         <style is="custom-style" include="iron-flex iron-flex-alignment iron-flex-reverse iron-flex-factors iron-positioning"></style>
@@ -296,6 +300,7 @@
             },
             attached: function () {
                 this.set('selectedTab', 0);
+                this.set('searchKey', '');
                 this._init();
             },
             importForm: function (importPath) {
