@@ -366,7 +366,11 @@
             fireEvent: function (ev) {
                 ev.stopPropagation();
                 var eventName = ev.currentTarget && ev.currentTarget.getAttribute('event-name');
-                var payload = ev.model.item;
+                var listIdx = ev.path.findIndex(function(e){
+                    return e.matches('iron-list.oe-workflow-inbox')
+                });
+                var listItem= ev.path[listIdx - 2];
+                var payload = listItem._templateInstance.item;
                 this.fire(eventName, payload);
             }
         })

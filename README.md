@@ -14,20 +14,44 @@ User can search a particular task based on its name.
 Fetches the updated list of tasks.
 
 ## Task Action
-Clicking on a pending task launches a custom form associated with the task.
+Clicking on a pending task launches a custom action associated with the task.
 oe-workflow-modeler can be used to associate a polymer form to the user  task.
-User task contains a formKey which takes the custom element's name/import path(if import path is given, it will be imported by oe-workflow-inbox)
-This custom form can use oe-workflow-form-behavior to complete the current task.
+User task contains a formKey which takes input of the following type:
+* elem:[element-name]
+
+    * When formKey is prefixed with elem: the rest of the formKey is taken as element name and the task information is passed to it.
+
+* import:[import-url]
+
+    * When formKey is prefixed with import: the rest of the formKey is taken as the import path for the element, It is dynamically imported and the task information is passed to it.
+
+* event:[event-name]
+
+    * When formKey is prefixed with elem: the rest of the formKey is taken as the event name , when the task is clicked this event is fired with the task info as the event detail.
+
+
+The custom elements can use oe-workflow-form-behavior to complete the current task.
 
 ## oe-workflow-form-behavior
 It contains the following properties :
 taskInfo : It contains model data.
 _task : It contains the entire task object.
 
-It contains the following methods :
-makeAjaxCall : It can be used to perform server calls.
+It contains the following method :
+
 completeTask : It accepts a payload, id and a callback function.The payload data should be handled by the form as it varies from task to task.
 
+## Templating
+
+oe-workflow-inbox provides the user to specify their custom template for the tasks listing screen.
+These templates should include the following implementations.
+
+* launchTask : The templates should implement an on-tap="launchTask" call on the element to specify to perform task action.
+
+* fireEvent (Optional): The template items may call on-tap="fireEvent" to get the task info via a event name without starting the usual task action. In such cases the element that calls the fireEvent function should contain an attribute called 'event-name' to specify the event-name on which the task information will be sent.
+
+![templating example](templating.png)
+In the above example clicking on the accept button , fires `accept-disbursal` event with the task information.
 ## Usage
 Follow the below steps to setup oe-workflow-inbox:
 
@@ -53,7 +77,7 @@ Example :
 
 4)Open oe-studio and goto workflow-modeler
                 Open the required workflow(e.g. Loan application present in CASSI Bank)
-                Select user task, goto the forms tab in the right panel and enter the element name or import path in formKey.
+                Select user task, goto the forms tab in the right panel and enter the required formKey.
                 Save with a new name and version then save and publish.
 
 5)Goto model designer
