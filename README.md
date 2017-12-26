@@ -46,42 +46,11 @@ completeTask : It accepts a payload, id and a callback function.The payload data
 oe-workflow-inbox provides the user to specify their custom template for the tasks listing screen.
 These templates should include the following implementations.
 
-* launchTask : The templates should implement an on-tap="launchTask" call on the element to specify to perform task action.
+* launchTask : The templates should implement an `on-tap="launchTask"` call on the element to specify to perform task action.
 
-* fireEvent (Optional): The template items may call on-tap="fireEvent" to get the task info via a event name without starting the usual task action. In such cases the element that calls the fireEvent function should contain an attribute called 'event-name' to specify the event-name on which the task information will be sent.
+* fireEvent (Optional): The template items may call `on-tap="fireEvent"` to get the task info via a event name without starting the usual task action. 
+In such cases the element that calls the fireEvent function should contain an  `event-name` attribute to specify the event-name on which the task information will be sent.
 
 ![templating example](templating.png)
+
 In the above example clicking on the accept button , fires `accept-disbursal` event with the task information.
-## Usage
-Follow the below steps to setup oe-workflow-inbox:
-
-1)Add oe-workflow-inbox as a bower dependency to your application.
-
-2)Add a new UI Route to access the tasks.
-example :
-{
-                type : elem
-                name : oe-workflow-inbox
-                path : /my-tasks
-                import : bower_components/oe-workflow-inbox/oe-workflow-inbox.html
-}
-
-3)Add a Navigation Link.
-Example :
-{
-                name : My tasks
-                label : My tasks
-                url : /my-tasks
-                group : root
-}
-
-4)Open oe-studio and goto workflow-modeler
-                Open the required workflow(e.g. Loan application present in CASSI Bank)
-                Select user task, goto the forms tab in the right panel and enter the required formKey.
-                Save with a new name and version then save and publish.
-
-5)Goto model designer
-                Open the model to which workflow is to be attached(e.g. LoanApplication) in grid view.
-                Select options goto attach workflow-inbox
-                Select oe-worklfow
-                Add the new workflow created above with a process name(e.g.LoanApplicationNew)
